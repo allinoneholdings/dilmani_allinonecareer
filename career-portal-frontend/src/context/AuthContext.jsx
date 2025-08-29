@@ -33,43 +33,62 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   // Login function
-  const login = async (username, password) => {
-    try {
-      const res = await axios.post('/api/auth/login', { username, password });
-      const { token, _id, username: uname, email, name, role } = res.data;
+// Login function - FIXED VERSION
+const login = async (username, password) => {
+  try {
+    const res = await axios.post('/api/auth/login', { username, password });
+    const { token, _id, username: uname, email, name, role } = res.data;
 
-      localStorage.setItem('token', token);
-      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-      setCurrentUser({ _id, username: uname, email, name, role });
+    localStorage.setItem('token', token);
+    axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    
+    // Create user object
+    const user = { _id, username: uname, email, name, role };
+    setCurrentUser(user);
 
-      return { success: true };
-    } catch (error) {
-      return { 
-        success: false, 
-        message: error.response?.data?.message || 'Login failed' 
-      };
-    }
-  };
+    // Return both success AND user data
+    return { 
+      success: true, 
+      user: user, // This is what's missing!
+      message: 'Login successful' 
+    };
+  } catch (error) {
+    return { 
+      success: false, 
+      message: error.response?.data?.message || 'Login failed',
+      user: null // Explicitly set user to null
+    };
+  }
+};
 
   // Signup function
-  const signup = async (userData) => {
-    try {
-      const res = await axios.post('/api/auth/register', userData);
-      const { token, _id, username, email, name, role } = res.data;
+// Signup function - UPDATED FOR CONSISTENCY
+const signup = async (userData) => {
+  try {
+    const res = await axios.post('/api/auth/register', userData);
+    const { token, _id, username, email, name, role } = res.data;
 
-      localStorage.setItem('token', token);
-      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-      setCurrentUser({ _id, username, email, name, role });
+    localStorage.setItem('token', token);
+    axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    
+    // Create user object
+    const user = { _id, username, email, name, role };
+    setCurrentUser(user);
 
-      return { success: true };
-    } catch (error) {
-      return { 
-        success: false, 
-        message: error.response?.data?.message || 'Signup failed' 
-      };
-    }
-  };
-
+    // Return both success AND user data
+    return { 
+      success: true, 
+      user: user,
+      message: 'Signup successful' 
+    };
+  } catch (error) {
+    return { 
+      success: false, 
+      message: error.response?.data?.message || 'Signup failed',
+      user: null
+    };
+  }
+};
   // Logout function
   const logout = () => {
     localStorage.removeItem('token');
