@@ -1,8 +1,8 @@
-import axios from "axios";
 import React, { useState } from "react";
-import toast from "react-hot-toast";
 import { useNavigate, useParams } from "react-router-dom";
-import { useAuth } from "../../context/AuthContext"; // <-- import your AuthContext hook
+import { useAuth } from "../context/AuthContext";
+import toast from "react-hot-toast";
+import axios from "axios";
 
 const Application = () => {
   const [experience, setExperience] = useState("");
@@ -10,9 +10,10 @@ const Application = () => {
   const [skillInput, setSkillInput] = useState("");
   const [notes, setNotes] = useState("");
   const [education, setEducation] = useState("");
+  const [resume, setResume] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  const { currentUser } = useAuth(); // <-- get current logged-in user
+  const { currentUser } = useAuth();
   const navigateTo = useNavigate();
   const { id } = useParams();
 
@@ -27,38 +28,45 @@ const Application = () => {
     setSkills(skills.filter((s) => s !== skill));
   };
 
+  const handleFileChange = (e) => {
+    setResume(e.target.files[0]);
+  };
+
   const handleApplication = async (e) => {
     e.preventDefault();
 
-    if (!experience || skills.length === 0 || !notes || !education) {
-      toast.error("Please fill in all fields and add at least one skill");
+    if (!experience || skills.length === 0 || !notes || !education || !resume) {
+      toast.error("Please fill in all fields, add at least one skill, and upload a resume");
       return;
     }
 
     setLoading(true);
 
     try {
-      const { data } = await axios.post(
-        "http://localhost:5000/api/applications",
-        {
-          jobId: id,
-          experience,
-          skills,
-          notes,
-          education,
-          name: currentUser.name,
-          email: currentUser.email,
+      const formData = new FormData();
+      formData.append('jobId', id);
+      formData.append('experience', experience);
+      formData.append('skills', JSON.stringify(skills));
+      formData.append('notes', notes);
+      formData.append('education', education);
+      formData.append('name', currentUser.name);
+      formData.append('email', currentUser.email);
+      formData.append('resume', resume);
+
+      const { data } = await axios.post('/api/applications', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
         },
-        { withCredentials: true }
-      );
+      });
 
       setExperience("");
       setSkills([]);
       setNotes("");
       setEducation("");
+      setResume(null);
 
       toast.success("Application submitted successfully!");
-      navigateTo("/job/getall");
+      navigateTo("/jobs"); // Changed to navigate to jobs page
     } catch (error) {
       toast.error(error.response?.data?.message || "Something went wrong.");
     } finally {
@@ -76,6 +84,18 @@ const Application = () => {
       <div className="max-w-3xl mx-auto bg-white shadow-md rounded-lg p-8">
         <h2 className="text-2xl font-bold mb-6 text-center">Job Application</h2>
         <form onSubmit={handleApplication} className="space-y-4">
+          {/* Resume Upload */}
+          <div>
+            <label className="block font-medium mb-1">Resume (PDF/DOC/DOCX) *</label>
+            <input
+              type="file"
+              accept=".pdf,.doc,.docx"
+              onChange={handleFileChange}
+              className="w-full border border-gray-300 rounded p-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
+              required
+            />
+          </div>
+
           {/* Experience */}
           <div>
             <label className="block font-medium mb-1">Experience</label>

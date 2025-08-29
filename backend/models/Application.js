@@ -18,7 +18,7 @@ const applicationSchema = new mongoose.Schema({
   applicantId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
-    required: true
+    required: false
   },
   experience: {
     years: { type: Number, default: 0 },
@@ -32,19 +32,25 @@ const applicationSchema = new mongoose.Schema({
   notes: String,
   email: {
     type: String,
-    required: true
+    required: false
   },
   name: {
     type: String,
-    required: true
+    required: false
   },
   education: [educationSchema],
+  resume: {
+    filename: String,
+    originalName: String,
+    path: String,
+    size: Number,
+    mimetype: String
+  },
   status: {
     type: String,
     enum: ['pending', 'accepted', 'rejected'],
     default: 'pending'
   }
 }, { timestamps: true });
-
 
 module.exports = mongoose.model('Application', applicationSchema);

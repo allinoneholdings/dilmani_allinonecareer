@@ -16,7 +16,6 @@ const Navbar = () => {
       <div className="container mx-auto flex justify-between items-center">
         <Link to="/" className="text-xl font-bold">Career Portal</Link>
         <div className="flex items-center space-x-4">
-          <Link to="/jobs" className="hover:underline">Jobs</Link>
           {currentUser ? (
             <>
               <Link to="/dashboard" className="hover:underline">Dashboard</Link>

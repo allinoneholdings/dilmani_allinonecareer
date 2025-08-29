@@ -2,11 +2,11 @@ import React, { useState } from 'react';
 import SkillsInput from '../components/SkillsInput';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext'; // Import your AuthContext hook
+import { useAuth } from '../context/AuthContext';
 
 const PostJob = () => {
   const navigate = useNavigate();
-  const { currentUser } = useAuth(); // Get current logged-in user
+  const { currentUser } = useAuth();
   const [job, setJob] = useState({ title:'', type:'', salary:'', description:'', requirements:'', skills:[] });
 
   const handleSubmit = async e => {
@@ -18,7 +18,7 @@ const PostJob = () => {
     }
 
     try {
-      // Axios will automatically include Authorization header from AuthContext
+      // Change from 'jobs' to '/api/jobs'
       await axios.post('/api/jobs', job);
       alert('Job posted successfully!');
       navigate('/jobs');
@@ -39,13 +39,18 @@ const PostJob = () => {
           className="border p-2 rounded" 
           required 
         />
-        <input 
+        <select 
           value={job.type} 
           onChange={e => setJob({...job, type:e.target.value})} 
-          placeholder="Type" 
           className="border p-2 rounded" 
-          required 
-        />
+          required
+        >
+          <option value="">Select Job Type</option>
+          <option value="full-time">Full-time</option>
+          <option value="part-time">Part-time</option>
+          <option value="contract">Contract</option>
+          <option value="internship">Internship</option>
+        </select>
         <input 
           type="number" 
           value={job.salary} 

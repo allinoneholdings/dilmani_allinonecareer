@@ -2,11 +2,49 @@ const express = require('express');
 const { protect, admin } = require('../middlewares/auth');
 const Application = require('../models/Application');
 const Job = require('../models/Job');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
+
+// Configure multer for file uploads
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const uploadDir = 'uploads/resumes';
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+    cb(null, uploadDir);
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+  }
+});
+
+const fileFilter = (req, file, cb) => {
+  const allowedTypes = /pdf|doc|docx/;
+  const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+  const mimetype = allowedTypes.test(file.mimetype);
+
+  if (mimetype && extname) {
+    return cb(null, true);
+  } else {
+    cb(new Error('Only PDF, DOC, and DOCX files are allowed'));
+  }
+};
+
+const upload = multer({
+  storage: storage,
+  limits: {
+    fileSize: 5 * 1024 * 1024 // 5MB limit
+  },
+  fileFilter: fileFilter
+});
 
 const router = express.Router();
 
-// Apply for a job
-router.post('/', protect, async (req, res) => {
+// Apply for a job with file upload
+router.post('/', upload.single('resume'), async (req, res) => {
   try {
     const { jobId, experience, skills, notes, education } = req.body;
     
@@ -26,19 +64,38 @@ router.post('/', protect, async (req, res) => {
       return res.status(400).json({ message: 'You have already applied for this job' });
     }
     
-    const application = await Application.create({
+    const applicationData = {
       jobId,
-      applicantId: req.user._id,
-      experience,
-      skills,
+      applicantId: JSON.parse(applicantId || '{}'),
+      experience: JSON.parse(experience || '{}'),
+      skills: JSON.parse(skills || '[]'),
       notes,
-      education,
-      email: req.user.email,
-      name: req.user.name
-    });
+      education: JSON.parse(education || '[]'),
+      email:JSON.parse(email || '{}'),
+      name: JSON.parse(name|| '{}')
+    };
+    
+    // Add resume file info if uploaded
+    if (req.file) {
+      applicationData.resume = {
+        filename: req.file.filename,
+        originalName: req.file.originalname,
+        path: req.file.path,
+        size: req.file.size,
+        mimetype: req.file.mimetype
+      };
+    }
+    
+    const application = await Application.create(applicationData);
     
     res.status(201).json(application);
   } catch (error) {
+    // Handle multer errors
+    if (error instanceof multer.MulterError) {
+      if (error.code === 'LIMIT_FILE_SIZE') {
+        return res.status(400).json({ message: 'File too large. Maximum size is 5MB' });
+      }
+    }
     res.status(500).json({ message: error.message });
   }
 });
