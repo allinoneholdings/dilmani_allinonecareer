@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { FaUpload, FaPlus, FaTrash, FaUser, FaEnvelope, FaBriefcase, FaGraduationCap, FaFilePdf, FaPaperPlane } from 'react-icons/fa';
+import { FaUpload, FaPlus, FaTrash, FaUser, FaEnvelope, FaBriefcase, FaGraduationCap, FaFilePdf, FaPaperPlane, FaExclamationTriangle } from 'react-icons/fa';
+import axios from "axios";
+import { useParams } from 'react-router-dom';
 
 const JobApplicationForm = () => {
+  const { id: jobId } = useParams();
   const [applicantId, setApplicantId] = useState('');
   const [formData, setFormData] = useState({
-    jobId: '',
     name: '',
     email: '',
     experience: { years: 0, months: 0 },
@@ -23,6 +25,8 @@ const JobApplicationForm = () => {
     description: ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState('');
+  const [fieldErrors, setFieldErrors] = useState({});
 
   // Generate a unique applicant ID on component mount
   useEffect(() => {
@@ -40,6 +44,14 @@ const JobApplicationForm = () => {
       ...prev,
       [name]: value
     }));
+    
+    // Clear field error when user starts typing
+    if (fieldErrors[name]) {
+      setFieldErrors(prev => ({
+        ...prev,
+        [name]: ''
+      }));
+    }
   };
 
   const handleExperienceChange = (e) => {
@@ -96,57 +108,83 @@ const JobApplicationForm = () => {
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
-    if (file && file.type === 'application/pdf') {
+     const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+  
+     if (file && allowedTypes.includes(file.type)) {
+      if (file.size > 5 * 1024 * 1024) {
+        setError('File size must be less than 5MB');
+        return;
+      }
       setFormData(prev => ({
         ...prev,
         resume: file
       }));
+      setError('');
     } else {
-      alert('Please upload a PDF file');
+      setError('Please upload a PDF file');
     }
+  };
+
+  const validateForm = () => {
+    const errors = {};
+    
+    if (!formData.name.trim()) {
+      errors.name = 'Name is required';
+    }
+    
+    if (!formData.email.trim()) {
+      errors.email = 'Email is required';
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      errors.email = 'Email is invalid';
+    }
+    
+    setFieldErrors(errors);
+    return Object.keys(errors).length === 0;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setIsSubmitting(true);
+    setError('');
+    setFieldErrors({});
     
+    if (!validateForm()) {
+      return;
+    }
+
+    setIsSubmitting(true);
+
     try {
-      // Create FormData object to send file and form data
       const submitData = new FormData();
       submitData.append('applicantId', applicantId);
-      submitData.append('jobId', formData.jobId);
       submitData.append('name', formData.name);
       submitData.append('email', formData.email);
       submitData.append('experience', JSON.stringify(formData.experience));
       submitData.append('skills', JSON.stringify(formData.skills));
       submitData.append('education', JSON.stringify(formData.education));
       submitData.append('notes', formData.notes);
-      
+      submitData.append('jobId', jobId);
+
       if (formData.resume) {
         submitData.append('resume', formData.resume);
       }
 
-      // Simulate API call
-      console.log('Submitting application:', {
-        applicantId,
-        ...formData,
-        resume: formData.resume ? formData.resume.name : 'No file'
-      });
+      // Use the correct endpoint - /api/applications instead of /api/jobs/:id/applications
+      const response = await axios.post(
+       `/api/applications/${jobId}`,
+        submitData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          },
+          timeout: 30000 // 30 second timeout
+        }
+      );
 
-      // In a real application, you would send this to your backend:
-      // const response = await fetch('/api/applications', {
-      //   method: 'POST',
-      //   body: submitData
-      // });
-      
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
+      console.log('Server response:', response.data);
       alert('Application submitted successfully!');
       
       // Reset form
       setFormData({
-        jobId: '',
         name: '',
         email: '',
         experience: { years: 0, months: 0 },
@@ -158,7 +196,35 @@ const JobApplicationForm = () => {
       
     } catch (error) {
       console.error('Error submitting application:', error);
-      alert('There was an error submitting your application. Please try again.');
+      
+      let errorMessage = 'There was an error submitting your application. Please try again.';
+      
+      if (error.code === 'ECONNABORTED') {
+        errorMessage = 'Request timeout. Please check your internet connection and try again.';
+      } else if (error.response) {
+        // Server responded with error status
+        switch (error.response.status) {
+          case 400:
+            errorMessage = error.response.data.message || 'Invalid data submitted. Please check your information.';
+            break;
+          case 404:
+            errorMessage = 'Application endpoint not found. Please contact support.';
+            break;
+          case 413:
+            errorMessage = 'File too large. Please upload a file smaller than 5MB.';
+            break;
+          case 500:
+            errorMessage = 'Server error. Please try again later.';
+            break;
+          default:
+            errorMessage = error.response.data.message || `Server error (${error.response.status}). Please try again.`;
+        }
+      } else if (error.request) {
+        // Request was made but no response received
+        errorMessage = 'Network error. Please check your internet connection and try again.';
+      }
+      
+      setError(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
@@ -175,6 +241,17 @@ const JobApplicationForm = () => {
           </div>
         </div>
 
+        {/* Error Alert */}
+        {error && (
+          <div className="mb-6 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg flex items-start">
+            <FaExclamationTriangle className="text-red-500 mt-1 mr-3 flex-shrink-0" />
+            <div>
+              <p className="font-medium">Error</p>
+              <p>{error}</p>
+            </div>
+          </div>
+        )}
+
         <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-md overflow-hidden">
           {/* Personal Information Section */}
           <div className="p-6 border-b border-gray-200">
@@ -190,9 +267,14 @@ const JobApplicationForm = () => {
                   name="name"
                   value={formData.name}
                   onChange={handleInputChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent"
+                  className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent ${
+                    fieldErrors.name ? 'border-red-500' : 'border-gray-300'
+                  }`}
                   required
                 />
+                {fieldErrors.name && (
+                  <p className="mt-1 text-sm text-red-600">{fieldErrors.name}</p>
+                )}
               </div>
               
               <div>
@@ -204,23 +286,15 @@ const JobApplicationForm = () => {
                   name="email"
                   value={formData.email}
                   onChange={handleInputChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent"
+                  className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent ${
+                    fieldErrors.email ? 'border-red-500' : 'border-gray-300'
+                  }`}
                   required
                 />
+                {fieldErrors.email && (
+                  <p className="mt-1 text-sm text-red-600">{fieldErrors.email}</p>
+                )}
               </div>
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Job ID *</label>
-              <input
-                type="text"
-                name="jobId"
-                value={formData.jobId}
-                onChange={handleInputChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent"
-                required
-                placeholder="Enter the Job ID you're applying for"
-              />
             </div>
           </div>
 
@@ -438,7 +512,7 @@ const JobApplicationForm = () => {
           <div className="p-6 bg-gray-50">
             <button
               type="submit"
-              disabled={isSubmitting || !formData.name || !formData.email || !formData.jobId}
+              disabled={isSubmitting || !formData.name || !formData.email}
               className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
             >
               {isSubmitting ? (

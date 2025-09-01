@@ -9,7 +9,7 @@ import Jobs from './pages/Jobs.jsx';
 import JobDetails from './pages/JobDetails.jsx';
 import PostJob from './pages/PostJob.jsx';
 import Dashboard from './pages/Dashboard.jsx';
-import Applications from './pages/Applications.jsx';
+
 import Upload from './pages/upload.jsx';
 import ProtectedRoute from './components/ProtectedRoute.jsx';
 import Admin from './adminPanel/Admin.jsx'; // This imports as Admin
@@ -43,13 +43,13 @@ function App() {
             } />
             
             {/* FIXED: Changed <superadmin /> to <SuperAdmin /> */}
-            <Route path="/super-admin" element={
+            <Route path="/superadmin" element={
               <ProtectedRoute>
                 <SuperAdmin />
               </ProtectedRoute>
             } />
             
-            <Route path="/applications" element={<Applications />} />
+          
             
             <Route path="/post-job" element={
               <ProtectedRoute allowedRoles={['superadmin']}>

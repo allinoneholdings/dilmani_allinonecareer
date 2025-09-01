@@ -17,7 +17,7 @@ const applicationSchema = new mongoose.Schema({
   },
   applicantId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
+     type: String,
     required: false
   },
   experience: {

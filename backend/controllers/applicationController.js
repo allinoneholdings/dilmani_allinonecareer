@@ -3,6 +3,7 @@ const Job = require('../models/Job');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const { uploadResume } = require('../middlewares/upload');
 
 // Configure multer for file uploads
 const storage = multer.diskStorage({

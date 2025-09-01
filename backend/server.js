@@ -3,6 +3,8 @@ const cors = require('cors');
 const dotenv = require('dotenv');
 const connectDB = require('./config/database');
 const errorHandler = require('./middlewares/errorHandler')
+const path = require('path');
+
 
 // Load env vars
 dotenv.config();
@@ -21,6 +23,7 @@ app.use('/api/auth', require('./routes/auth'));
 app.use('/api/jobs', require('./routes/jobs'));
 app.use('/api/applications', require('./routes/application'));
 app.use('/api/s', require('./routes/jobs'));
+app.use('/uploads', express.static('uploads'));
 
 // Error handling middleware
 app.use(errorHandler);
