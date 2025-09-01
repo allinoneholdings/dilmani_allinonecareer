@@ -81,7 +81,7 @@ const Jobs = () => {
                   <strong>Type:</strong> {job.type}
                 </p>
                 <p className="text-gray-600 mb-2">
-                  <strong>Salary:</strong> ${job.salary.toLocaleString()}
+                  <strong>Salary:</strong> RS. {job.salary.toLocaleString()}
                 </p>
                 <p className="text-gray-700 mb-4 line-clamp-3">
                   {job.description}

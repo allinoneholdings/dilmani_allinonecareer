@@ -457,13 +457,7 @@ const JobApplicationForm = () => {
                 ></textarea>
               </div>
               
-              <button
-                type="button"
-                onClick={handleEducationAdd}
-                className="flex items-center justify-center w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                <FaPlus className="mr-2" /> Add Education
-              </button>
+            
             </div>
           </div>
 

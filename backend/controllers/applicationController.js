@@ -1,12 +1,12 @@
 const Application = require('../models/Application');
 const Job = require('../models/Job');
-const multer = require('multer');
-const path = require('path');
-const fs = require('fs');
-const { uploadResume } = require('../middlewares/upload');
+//const multer = require('multer');
+//const path = require('path');
+//const fs = require('fs');
+//const { uploadResume } = require('../middlewares/upload');
 
 // Configure multer for file uploads
-const storage = multer.diskStorage({
+/*const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     const uploadDir = 'uploads/resumes';
     if (!fs.existsSync(uploadDir)) {
@@ -38,7 +38,7 @@ const upload = multer({
     fileSize: 5 * 1024 * 1024 // 5MB limit
   },
   fileFilter: fileFilter
-});
+});*/
 
 // @desc    Apply for a job
 // @route   POST /api/applications
@@ -74,7 +74,6 @@ exports.applyForJob = async (req, res) => {
       name: JSON.parse(name||'{}')
     };
     
-    // Add resume file info if uploaded
     if (req.file) {
       applicationData.resume = {
         filename: req.file.filename,
@@ -94,4 +93,4 @@ exports.applyForJob = async (req, res) => {
 };
 
 // Export the upload middleware
-exports.uploadResume = upload.single('resume');
+//exports.uploadResume = upload.single('resume');

@@ -13,7 +13,7 @@ const Navbar = () => {
 
   return (
     <nav className="bg-blue-600 text-white p-4 shadow-md">
-      <div className="container mx-auto flex justify-between items-center">
+      <div className="container flex justify-between items-center">
         {/* Hide Career Portal link for admin/superadmin users */}
         {!currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'superadmin') ? (
           <Link to="/" className="text-xl font-bold">Career Portal</Link>

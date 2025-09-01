@@ -130,7 +130,6 @@ const Home = () => {
         )}
       </div>
 
-      {/* View All Jobs CTA */}
       {jobs.length > 6 && (
         <div className="text-center mt-8">
           <button

@@ -2,7 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const connectDB = require('./config/database');
-const errorHandler = require('./middlewares/errorHandler')
+
 const path = require('path');
 
 
@@ -26,7 +26,7 @@ app.use('/api/s', require('./routes/jobs'));
 app.use('/uploads', express.static('uploads'));
 
 // Error handling middleware
-app.use(errorHandler);
+//app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
 
