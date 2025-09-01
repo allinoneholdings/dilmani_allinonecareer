@@ -73,22 +73,29 @@ const SuperAdmin = () => {
     }
   };
 
-  const deleteJob = async (jobId) => {
-    if (!window.confirm("Are you sure you want to delete this job?")) return;
-    
-    try {
-      await axios.delete(`/api/jobs/${jobId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setJobs(jobs.filter(job => job._id !== jobId));
-      if (selectedJobId === jobId) {
-        setSelectedJobId(null);
-      }
-    } catch (err) {
-      setError("Failed to delete job");
+ const deleteJob = async (jobId) => {
+  if (!window.confirm("Are you sure you want to delete this job?")) return;
+  
+  // Get token from storage
+  const token = localStorage.getItem('token'); // or sessionStorage
+  
+  if (!token) {
+    setError("Please log in again");
+    return;
+  }
+  
+  try {
+    await axios.delete(`/api/jobs/${jobId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    setJobs(jobs.filter(job => job._id !== jobId));
+    if (selectedJobId === jobId) {
+      setSelectedJobId(null);
     }
-  };
-
+  } catch (err) {
+    setError("Failed to delete job");
+  }
+};
   const createUser = async (e) => {
     e.preventDefault();
     try {
